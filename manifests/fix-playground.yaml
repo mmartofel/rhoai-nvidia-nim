@@ -1,0 +1,11 @@
+# Makes an existing InferenceService visible in the RHOAI Playground (GenAI Studio).
+# The dashboard surfaces models that have both of these set; without them the model
+# is accessible via API but does not appear in the Playground model list.
+#
+# Apply with:
+#   oc patch inferenceservice <name> -n <namespace> --type=merge -f fix-playground.yaml
+metadata:
+  labels:
+    opendatahub.io/genai-asset: "true"
+  annotations:
+    opendatahub.io/model-type: generative

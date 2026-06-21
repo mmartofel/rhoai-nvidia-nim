@@ -1,0 +1,16 @@
+# Standalone patch for an existing InferenceService created via the RHOAI UI.
+# Apply with:
+#   oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
+#     --type=merge -f fix-t4-patch.yaml
+#
+# See 04-inferenceservice.yaml for full explanation of why these env vars are needed.
+spec:
+  predictor:
+    model:
+      env:
+        - name: NIM_MODEL_PROFILE
+          value: "4f904d571fe60ff24695b5ee2aa42da58cb460787a968f1e8a09f5a7e862728d"
+        - name: NIM_MAX_MODEL_LEN
+          value: "16384"
+        - name: NIM_SERVED_MODEL_NAME
+          value: "llama-31-nemotron-nano-4b"

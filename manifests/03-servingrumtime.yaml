@@ -1,0 +1,71 @@
+# NIM ServingRuntime for llama3.1-nemotron-nano-4b-v1.1.
+# RHOAI creates this automatically when you deploy via the UI; include it here
+# for a fully CLI-driven reproduction.
+#
+# Image tag 1.8.5 is the version pulled by the RHOAI 3.4 NIM integration.
+# Check https://catalog.ngc.nvidia.com/orgs/nim/teams/nvidia/containers/llama3.1-nemotron-nano-4b-v1.1
+# for newer tags before re-deploying.
+apiVersion: serving.kserve.io/v1alpha1
+kind: ServingRuntime
+metadata:
+  name: llama-31-nemotron-nano-4b
+  namespace: nvidia-nim
+  annotations:
+    opendatahub.io/apiProtocol: REST
+    opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
+    opendatahub.io/template-display-name: NVIDIA NIM
+    opendatahub.io/template-name: nvidia-nim-runtime
+    openshift.io/display-name: llama-31-nemotron-nano-4b
+    runtimes.opendatahub.io/nvidia-nim: "true"
+  labels:
+    opendatahub.io/dashboard: "true"
+spec:
+  annotations:
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8000"
+  multiModel: false
+  protocolVersions:
+    - grpc-v2
+    - v2
+  supportedModelFormats:
+    - name: llama3.1-nemotron-nano-4b-v1.1
+      version: "1.8.5"
+      priority: 1
+      autoSelect: false
+  imagePullSecrets:
+    - name: ngc-secret
+  containers:
+    - name: kserve-container
+      image: nvcr.io/nim/nvidia/llama3.1-nemotron-nano-4b-v1.1:1.8.5
+      ports:
+        - containerPort: 8000
+          protocol: TCP
+      env:
+        - name: NIM_CACHE_PATH
+          value: /mnt/models/cache
+        - name: NGC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nvidia-nim-secrets
+              key: NGC_API_KEY
+      volumeMounts:
+        - name: nim-model-cache
+          mountPath: /mnt/models/cache
+        - name: nim-workspace
+          mountPath: /opt/nim/workspace
+        - name: nim-cache
+          mountPath: /.cache
+        - name: shm
+          mountPath: /dev/shm
+  volumes:
+    - name: nim-model-cache
+      persistentVolumeClaim:
+        claimName: nim-model-cache
+    - name: nim-workspace
+      emptyDir: {}
+    - name: nim-cache
+      emptyDir: {}
+    - name: shm
+      emptyDir:
+        medium: Memory
+        sizeLimit: 2Gi

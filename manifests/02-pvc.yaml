@@ -1,0 +1,17 @@
+# Persistent storage for the NIM model cache.
+# 30Gi is the minimum recommended for a 4B model (image is ~16 GB + build artifacts).
+# Adjust storageClassName to match your cluster's available storage class.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nim-model-cache
+  namespace: nvidia-nim
+  labels:
+    opendatahub.io/managed: "true"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 30Gi
+  storageClassName: gp3-csi

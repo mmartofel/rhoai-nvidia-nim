@@ -1,0 +1,62 @@
+# Patches the llama-stack-config ConfigMap that RHOAI auto-creates when you enable GenAI Studio
+# for a namespace. The patch registers the NIM model with the Llama Stack server so the
+# RHOAI Playground can use it.
+#
+# Prerequisites: the lsd-genai-playground Deployment must already exist in the namespace
+# (RHOAI creates it automatically after you apply fix-playground.yaml to your InferenceService).
+#
+# Apply with:
+#   oc patch configmap llama-stack-config -n nvidia-nim --type=merge \
+#     --patch-file manifests/05-llamastack-config-patch.yaml
+#
+# Then restart the Playground deployment to pick up the change:
+#   oc rollout restart deployment/lsd-genai-playground -n nvidia-nim
+#
+# --- Why each field matters ---
+#
+# provider_id: vllm-inference-1
+#   The inference provider ID defined in the Llama Stack distro config. Must match exactly.
+#
+# model_id: llama-31-nemotron-nano-4b
+#   The name Llama Stack uses internally AND the name it sends to NIM in "model:" field.
+#   Must match NIM_SERVED_MODEL_NAME on the InferenceService (see 04-inferenceservice.yaml).
+#   Keep it slash-free: Llama Stack exposes the model as "{provider_id}/{model_id}", so
+#   any slash here creates a 3-segment URL that breaks the RHOAI Playground's routing.
+#
+# DO NOT add provider_model_id here.
+#   When provider_model_id is set, Llama Stack overrides model_id with provider_model_id
+#   when constructing the external model ID — ignoring model_id entirely.
+#   That was the root cause of the grayed-out model in the Playground.
+#
+# base_url / tls_verify
+#   The NIM predictor's kube-rbac-proxy listens on port 8443 with TLS (self-signed cert).
+#   tls_verify must be false because the cert is not signed by a cluster CA that Llama Stack trusts.
+#
+# NOTE: This patch is a strategic-merge patch against the full ConfigMap. The data.config.yaml
+# field is a YAML string embedded in JSON — you cannot do a targeted sub-field patch.
+# To apply, extract the current ConfigMap, edit the YAML string programmatically, then
+# replace the whole data.config.yaml value. The README has the Python one-liner to do this.
+# The snippet below shows the INTENDED final state of the relevant sections, not a directly
+# applicable patch — see README Step 5 for the actual apply procedure.
+
+# --- Intended state of registered_resources.models entry ---
+#
+# registered_resources:
+#   models:
+#   - provider_id: vllm-inference-1
+#     model_id: llama-31-nemotron-nano-4b
+#     model_type: llm
+#     metadata:
+#       display_name: Llama-3.1-Nemotron-Nano-4B
+#
+# --- Intended state of providers.inference vllm-inference-1 config ---
+#
+# providers:
+#   inference:
+#   - provider_id: vllm-inference-1
+#     provider_type: remote::vllm
+#     config:
+#       api_token: ${env.VLLM_API_TOKEN_1:=fake}
+#       base_url: https://llama-31-nemotron-nano-4b-predictor.nvidia-nim.svc.cluster.local:8443/v1
+#       max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
+#       tls_verify: false

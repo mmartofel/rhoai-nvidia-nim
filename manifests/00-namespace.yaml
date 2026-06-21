@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nvidia-nim
+  annotations:
+    opendatahub.io/nim-support: "true"
+    openshift.io/display-name: nvidia-nim
+    openshift.io/description: NVIDIA NIM inference namespace
+  labels:
+    kubernetes.io/metadata.name: nvidia-nim
+    opendatahub.io/dashboard: "true"

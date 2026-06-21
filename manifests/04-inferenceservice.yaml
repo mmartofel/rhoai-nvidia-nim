@@ -1,0 +1,63 @@
+# InferenceService for llama3.1-nemotron-nano-4b-v1.1 running on a T4 GPU (16 GB VRAM).
+#
+# Two env vars are required to run on T4 — without them the pod loops in CrashLoopBackOff:
+#
+#   NIM_MODEL_PROFILE: forces the vLLM backend instead of TensorRT-LLM.
+#     TensorRT-LLM (the default auto-selected profile) must compile CUDA kernels on first
+#     start (~10 min on T4). The readiness probe kills the container before the build
+#     completes, creating an infinite restart loop that erases the build cache each time.
+#     The vLLM profile has no build step and starts in ~2 minutes.
+#     Profile ID: 4f904d571fe60ff24695b5ee2aa42da58cb460787a968f1e8a09f5a7e862728d
+#
+#   NIM_MAX_MODEL_LEN: caps the context window so the KV cache fits in T4 VRAM.
+#     The model's default context is 131 072 tokens. After loading weights (8.44 GB),
+#     only ~6 GB remain for KV cache — enough for ~27 000 tokens. vLLM refuses to start
+#     if max_model_len > KV cache capacity, so we cap it at 16 384 (16 K context).
+apiVersion: serving.kserve.io/v1beta1
+kind: InferenceService
+metadata:
+  name: llama-31-nemotron-nano-4b
+  namespace: nvidia-nim
+  annotations:
+    modelFormat: llama3.1-nemotron-nano-4b-v1.1
+    opendatahub.io/hardware-profile-name: gpu-profile
+    opendatahub.io/hardware-profile-namespace: redhat-ods-applications
+    openshift.io/display-name: Llama-3.1-Nemotron-Nano-4B
+    security.opendatahub.io/enable-auth: "true"
+    serving.kserve.io/deploymentMode: Standard
+    # Required for RHOAI Playground (GenAI Studio) visibility.
+    opendatahub.io/model-type: generative
+  labels:
+    networking.kserve.io/visibility: exposed
+    opendatahub.io/dashboard: "true"
+    # Required for RHOAI Playground (GenAI Studio) visibility.
+    opendatahub.io/genai-asset: "true"
+spec:
+  predictor:
+    automountServiceAccountToken: false
+    minReplicas: 1
+    maxReplicas: 1
+    model:
+      modelFormat:
+        name: llama3.1-nemotron-nano-4b-v1.1
+      runtime: llama-31-nemotron-nano-4b
+      resources:
+        requests:
+          cpu: "1"
+          memory: 12Gi
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "1"
+          memory: 12Gi
+          nvidia.com/gpu: "1"
+      env:
+        - name: NIM_MODEL_PROFILE
+          value: "4f904d571fe60ff24695b5ee2aa42da58cb460787a968f1e8a09f5a7e862728d"
+        - name: NIM_MAX_MODEL_LEN
+          value: "16384"
+        # Makes NIM/vLLM serve the model under a slash-free name.
+        # Without this, NIM uses "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1" which creates a
+        # 3-segment Llama Stack model ID (vllm-inference-1/nvidia/...) that breaks the
+        # RHOAI Playground URL routing — the model appears grayed out and unselectable.
+        - name: NIM_SERVED_MODEL_NAME
+          value: "llama-31-nemotron-nano-4b"
