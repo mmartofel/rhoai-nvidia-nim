@@ -48,6 +48,8 @@ oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
 
 **Playground Llama Stack config**: The `llama-stack-config` ConfigMap must NOT include `provider_model_id` in the model entry — when present, Llama Stack uses it instead of `model_id` to construct the external ID, re-introducing the 3-segment slash problem. Also requires `tls_verify: false` because NIM's kube-rbac-proxy sidecar uses a self-signed cert.
 
+**ServiceMonitor `/metrics` 404 (known limitation)**: RHOAI auto-creates a `ServiceMonitor` owned by the InferenceService with no `path` (Prometheus default: `/metrics`). NIM exposes metrics at `/v1/metrics`. Manual patches to the ServiceMonitor are reconciled back within seconds by the RHOAI KServe controller. The `prometheus.io/path: /v1/metrics` annotation on the ISVC and ServingRuntime does not propagate to the ServiceMonitor. Result: Prometheus scrapes `/metrics` and gets 404 every ~16s — cosmetic log noise only, does not affect inference or the Playground.
+
 ## DAS operator warning
 
 The DAS (Dynamic Accelerator Scheduling) operator was previously installed on this cluster and fully removed on 2026-06-22. If it is reinstalled, its `MutatingWebhookConfiguration` (`das-mutating-webhook-configuration`) uses `failurePolicy: Fail` and will block all pod creation cluster-wide if the operator is later deleted without removing the webhook first.

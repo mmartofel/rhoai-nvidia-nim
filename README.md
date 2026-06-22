@@ -191,11 +191,6 @@ else:
     entry['model_id'] = 'llama-31-nemotron-nano-4b'
     entry.pop('provider_model_id', None)
 
-# Disable TLS verification (NIM uses self-signed cert)
-for p in cfg.get('providers', {}).get('inference', []):
-    if p.get('provider_id') == 'vllm-inference-1':
-        p['config']['tls_verify'] = False
-
 with open('/tmp/llama-stack-config-new.yaml', 'w') as f:
     yaml.dump(cfg, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
 "
@@ -209,8 +204,9 @@ oc rollout restart deployment/lsd-genai-playground -n nvidia-nim
 **Why `provider_model_id` must NOT be set:** When present, Llama Stack uses it (not `model_id`) to
 form the external ID, producing the 3-segment slash problem described in Step B.
 
-**Why `tls_verify: false`:** NIM's kube-rbac-proxy sidecar serves on port 8443 with a self-signed
-TLS certificate that Llama Stack cannot verify by default.
+**TLS verification:** The lsd-genai-playground Deployment sets `VLLM_TLS_VERIFY=false` as an env
+var. The ConfigMap template `${env.VLLM_TLS_VERIFY:=true}` resolves to `false` at runtime — no
+ConfigMap edit needed. Patching it directly would be overwritten on every `oc rollout restart`.
 
 ### Verify Playground is working
 

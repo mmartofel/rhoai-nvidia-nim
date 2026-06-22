@@ -3,7 +3,7 @@
 #   oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
 #     --type=merge --patch-file fix-t4-patch.yaml
 #
-# See 04-inferenceservice.yaml for full explanation of why these env vars are needed.
+# See 03-inferenceservice.yaml for full explanation of why these env vars are needed.
 spec:
   predictor:
     model:

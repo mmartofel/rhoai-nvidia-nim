@@ -7,7 +7,7 @@
 #
 # Apply with:
 #   oc patch configmap llama-stack-config -n nvidia-nim --type=merge \
-#     --patch-file manifests/05-llamastack-config-patch.yaml
+#     --patch-file manifests/04-llamastack-config-patch.yaml
 #
 # Then restart the Playground deployment to pick up the change:
 #   oc rollout restart deployment/lsd-genai-playground -n nvidia-nim
@@ -19,7 +19,7 @@
 #
 # model_id: llama-31-nemotron-nano-4b
 #   The name Llama Stack uses internally AND the name it sends to NIM in "model:" field.
-#   Must match NIM_SERVED_MODEL_NAME on the InferenceService (see 04-inferenceservice.yaml).
+#   Must match NIM_SERVED_MODEL_NAME on the InferenceService (see 03-inferenceservice.yaml).
 #   Keep it slash-free: Llama Stack exposes the model as "{provider_id}/{model_id}", so
 #   any slash here creates a 3-segment URL that breaks the RHOAI Playground's routing.
 #
@@ -30,7 +30,9 @@
 #
 # base_url / tls_verify
 #   The NIM predictor's kube-rbac-proxy listens on port 8443 with TLS (self-signed cert).
-#   tls_verify must be false because the cert is not signed by a cluster CA that Llama Stack trusts.
+#   tls_verify must be false. The ConfigMap template uses ${env.VLLM_TLS_VERIFY:=true}, which
+#   resolves to false because the lsd-genai-playground Deployment sets VLLM_TLS_VERIFY=false.
+#   Do NOT patch the ConfigMap to hardcode false — it is overwritten on every rollout restart.
 #
 # NOTE: This patch is a strategic-merge patch against the full ConfigMap. The data.config.yaml
 # field is a YAML string embedded in JSON — you cannot do a targeted sub-field patch.
