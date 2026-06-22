@@ -27,19 +27,29 @@ Reference article: https://developers.redhat.com/articles/2025/05/08/how-set-nvi
 
 ## Step 2 — Create NGC secrets
 
-First create the namespace, then create both secrets imperatively (never commit real keys):
+Create both secrets imperatively (never commit real keys). Set your key first:
+
+```bash
+export NGC_API_KEY="<your-key>"
+```
+
+Create the namespace:
 
 ```bash
 oc apply -f manifests/00-namespace.yaml
+```
 
-NGC_API_KEY="<your-key>"
+Runtime secret — injects `NGC_API_KEY` env var into the NIM container:
 
-# Runtime secret — injects NGC_API_KEY env var into the NIM container
+```bash
 oc create secret generic nvidia-nim-secrets \
   --from-literal=NGC_API_KEY="${NGC_API_KEY}" \
   -n nvidia-nim
+```
 
-# Image pull secret — used by the ServingRuntime to pull from nvcr.io
+Image pull secret — used by the ServingRuntime to pull from `nvcr.io`:
+
+```bash
 oc create secret docker-registry ngc-secret \
   --docker-server=nvcr.io \
   --docker-username='$oauthtoken' \
@@ -52,9 +62,6 @@ oc create secret docker-registry ngc-secret \
 ## Step 3 — Apply manifests
 
 ```bash
-# Namespace (idempotent — already applied in Step 2)
-oc apply -f manifests/00-namespace.yaml
-
 # Create PVC for model cache (30 Gi, gp3-csi)
 oc apply -f manifests/02-pvc.yaml
 
