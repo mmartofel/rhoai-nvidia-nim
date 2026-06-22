@@ -70,6 +70,12 @@ oc apply -f manifests/02-servingruntime.yaml
 
 # Create InferenceService (includes T4 fixes — see below)
 oc apply -f manifests/03-inferenceservice.yaml
+
+# Ensure RHOAI Playground (GenAI Studio) visibility labels are set.
+# Labels are already embedded in 03-inferenceservice.yaml so this is idempotent;
+# it also works as a standalone fix for UI-deployed ISVCs.
+oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
+  --type=merge -f manifests/fix-playground.yaml
 ```
 
 Watch the pod start up:
@@ -148,43 +154,13 @@ Fix: set `NIM_MAX_MODEL_LEN=16384` to cap at 16 K context, which comfortably fit
 
 ---
 
-## Enabling the RHOAI Playground (GenAI Studio)
+## Enabling the RHOAI Playground
 
-Three things must be in place for the model to be visible **and selectable** in the Playground.
-`03-inferenceservice.yaml` handles all three; if you deployed via the UI apply them separately:
+Steps A (visibility labels) and B (slash-free model name) are already handled by
+`03-inferenceservice.yaml` and the `fix-playground.yaml` patch applied in Step 3.
 
-### Step A — Playground visibility labels
-
-```bash
-oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
-  --type=merge -f manifests/fix-playground.yaml
-```
-
-No pod restart needed. RHOAI detects the label change via Kubernetes informers and automatically
-deploys the `lsd-genai-playground` pod into the namespace.
-
-**Why needed:** The Playground only surfaces `InferenceService` objects with
-`opendatahub.io/genai-asset: "true"` label AND `opendatahub.io/model-type: generative` annotation.
-NIM UI deployments are missing both.
-
-### Step B — Slash-free served model name (`NIM_SERVED_MODEL_NAME`)
-
-The `03-inferenceservice.yaml` (or `fix-t4-patch.yaml`) sets:
-```yaml
-- name: NIM_SERVED_MODEL_NAME
-  value: "llama-31-nemotron-nano-4b"
-```
-
-**Why needed:** Without this, NIM serves the model as `nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1`.
-The Llama Stack server constructs its external model ID as `{provider_id}/{served_name}`, so that
-becomes `vllm-inference-1/nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1` — three path segments.
-The Playground's URL routing only handles two-segment IDs; the model appears in the list but is
-**grayed out with a red warning icon** and cannot be selected.
-
-Setting a slash-free served name produces `vllm-inference-1/llama-31-nemotron-nano-4b` (two
-segments), which the Playground routes correctly.
-
-### Step C — Register model in Llama Stack config
+The one remaining manual action is registering the model in the Llama Stack config after
+the `lsd-genai-playground` pod is running.
 
 After the `lsd-genai-playground` pod is running, patch the auto-generated `llama-stack-config`
 ConfigMap to register the NIM model. Use the Python snippet below (requires `pyyaml` — on RHEL9
