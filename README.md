@@ -19,27 +19,27 @@ Reference article: https://developers.redhat.com/articles/2025/05/08/how-set-nvi
 
 ## Step 1 — Enable NIM in RHOAI (UI, one-time per cluster)
 
-1. Open the RHOAI dashboard → **Settings → Serving runtimes**
-2. Click **Add serving runtime** and confirm that **NVIDIA NIM** appears as a template
-3. If it does not appear, ensure the `nvidia-nim-runtime` ClusterServingRuntime is installed (done by the RHOAI operator when the NIM feature flag is enabled)
+1. Open the RHOAI dashboard → **Applications → Explore**
+2. Find the **NVIDIA NIM** tile and click **Enable**
+3. Confirm it appears under **Applications → Enabled**
 
 ---
 
 ## Step 2 — Create NGC secrets
 
-Fill in your NGC API key, then apply:
+First create the namespace, then create both secrets imperatively (never commit real keys):
 
 ```bash
-# Option A: edit 01-ngc-secrets.yaml and replace placeholders, then:
-oc apply -f manifests/01-ngc-secrets.yaml
+oc apply -f manifests/00-namespace.yaml
 
-# Option B: create secrets imperatively (avoids committing credentials)
 NGC_API_KEY="<your-key>"
 
+# Runtime secret — injects NGC_API_KEY env var into the NIM container
 oc create secret generic nvidia-nim-secrets \
   --from-literal=NGC_API_KEY="${NGC_API_KEY}" \
   -n nvidia-nim
 
+# Image pull secret — used by the ServingRuntime to pull from nvcr.io
 oc create secret docker-registry ngc-secret \
   --docker-server=nvcr.io \
   --docker-username='$oauthtoken' \
@@ -47,21 +47,19 @@ oc create secret docker-registry ngc-secret \
   -n nvidia-nim
 ```
 
-> **Important:** Do not commit real API key values. Use `01-ngc-secrets.yaml` as a template only.
-
 ---
 
 ## Step 3 — Apply manifests
 
 ```bash
-# Create namespace
+# Namespace (idempotent — already applied in Step 2)
 oc apply -f manifests/00-namespace.yaml
 
 # Create PVC for model cache (30 Gi, gp3-csi)
 oc apply -f manifests/02-pvc.yaml
 
 # Create NIM ServingRuntime
-oc apply -f manifests/03-servingrumtime.yaml
+oc apply -f manifests/03-servingruntime.yaml
 
 # Create InferenceService (includes T4 fixes — see below)
 oc apply -f manifests/04-inferenceservice.yaml
@@ -253,7 +251,7 @@ should be selectable (not grayed out). Send a message to confirm end-to-end chat
 | `manifests/00-namespace.yaml` | Namespace with RHOAI NIM annotation |
 | `manifests/01-ngc-secrets.yaml` | Secret templates (fill in NGC API key before applying) |
 | `manifests/02-pvc.yaml` | 30 Gi PVC for model cache |
-| `manifests/03-servingrumtime.yaml` | NIM ServingRuntime |
+| `manifests/03-servingruntime.yaml` | NIM ServingRuntime |
 | `manifests/04-inferenceservice.yaml` | InferenceService with T4 fixes + Playground labels + served model name |
 | `manifests/05-llamastack-config-patch.yaml` | Documents Llama Stack ConfigMap changes required for Playground |
 | `manifests/fix-t4-patch.yaml` | Patch-only: T4 vLLM profile + context cap + served model name |
