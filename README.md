@@ -258,4 +258,5 @@ should be selectable (not grayed out). Send a message to confirm end-to-end chat
 | `manifests/05-llamastack-config-patch.yaml` | Documents Llama Stack ConfigMap changes required for Playground |
 | `manifests/fix-t4-patch.yaml` | Patch-only: T4 vLLM profile + context cap + served model name |
 | `manifests/fix-playground.yaml` | Patch-only: adds Playground visibility to any InferenceService |
+| `manifests/fix-cpu-request.yaml` | Patch-only: lowers kserve-container CPU request to 200m (limit stays 1); needed when GPU nodes have limited CPU headroom |
 
