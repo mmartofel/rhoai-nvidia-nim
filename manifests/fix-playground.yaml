@@ -3,7 +3,7 @@
 # is accessible via API but does not appear in the Playground model list.
 #
 # Apply with:
-#   oc patch inferenceservice <name> -n <namespace> --type=merge -f fix-playground.yaml
+#   oc patch inferenceservice <name> -n <namespace> --type=merge --patch-file fix-playground.yaml
 metadata:
   labels:
     opendatahub.io/genai-asset: "true"

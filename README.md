@@ -75,7 +75,7 @@ oc apply -f manifests/03-inferenceservice.yaml
 # Labels are already embedded in 03-inferenceservice.yaml so this is idempotent;
 # it also works as a standalone fix for UI-deployed ISVCs.
 oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
-  --type=merge -f manifests/fix-playground.yaml
+  --type=merge --patch-file manifests/fix-playground.yaml
 ```
 
 Watch the pod start up:
@@ -120,7 +120,7 @@ The UI creates the ServingRuntime and PVC automatically. You still need to apply
 
 ```bash
 oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
-  --type=merge -f manifests/fix-t4-patch.yaml
+  --type=merge --patch-file manifests/fix-t4-patch.yaml
 ```
 
 Then delete the current pod so it restarts with the new config:

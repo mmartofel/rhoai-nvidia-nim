@@ -4,7 +4,7 @@
 #
 # Apply with:
 #   oc patch inferenceservice llama-31-nemotron-nano-4b -n nvidia-nim \
-#     --type=merge -f fix-cpu-request.yaml
+#     --type=merge --patch-file fix-cpu-request.yaml
 spec:
   predictor:
     model:
