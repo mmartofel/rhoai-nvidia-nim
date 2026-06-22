@@ -43,7 +43,7 @@ spec:
       runtime: llama-31-nemotron-nano-4b
       resources:
         requests:
-          cpu: "1"
+          cpu: "200m"
           memory: 12Gi
           nvidia.com/gpu: "1"
         limits:
