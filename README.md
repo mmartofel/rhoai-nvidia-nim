@@ -104,7 +104,7 @@ curl -sk "${URL}/v1/chat/completions" \
   -H "Authorization: Bearer $(oc whoami -t)" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "nvidia/Llama-3.1-Nemotron-Nano-4B-v1.1",
+    "model": "llama-31-nemotron-nano-4b",
     "messages": [{"role": "user", "content": "Say hello in one sentence."}],
     "max_tokens": 50
   }'
