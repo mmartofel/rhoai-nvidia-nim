@@ -63,13 +63,13 @@ oc create secret docker-registry ngc-secret \
 
 ```bash
 # Create PVC for model cache (30 Gi, gp3-csi)
-oc apply -f manifests/02-pvc.yaml
+oc apply -f manifests/01-pvc.yaml
 
 # Create NIM ServingRuntime
-oc apply -f manifests/03-servingruntime.yaml
+oc apply -f manifests/02-servingruntime.yaml
 
 # Create InferenceService (includes T4 fixes — see below)
-oc apply -f manifests/04-inferenceservice.yaml
+oc apply -f manifests/03-inferenceservice.yaml
 ```
 
 Watch the pod start up:
@@ -151,7 +151,7 @@ Fix: set `NIM_MAX_MODEL_LEN=16384` to cap at 16 K context, which comfortably fit
 ## Enabling the RHOAI Playground (GenAI Studio)
 
 Three things must be in place for the model to be visible **and selectable** in the Playground.
-`04-inferenceservice.yaml` handles all three; if you deployed via the UI apply them separately:
+`03-inferenceservice.yaml` handles all three; if you deployed via the UI apply them separately:
 
 ### Step A — Playground visibility labels
 
@@ -169,7 +169,7 @@ NIM UI deployments are missing both.
 
 ### Step B — Slash-free served model name (`NIM_SERVED_MODEL_NAME`)
 
-The `04-inferenceservice.yaml` (or `fix-t4-patch.yaml`) sets:
+The `03-inferenceservice.yaml` (or `fix-t4-patch.yaml`) sets:
 ```yaml
 - name: NIM_SERVED_MODEL_NAME
   value: "llama-31-nemotron-nano-4b"
@@ -256,11 +256,10 @@ should be selectable (not grayed out). Send a message to confirm end-to-end chat
 | File | Purpose |
 |---|---|
 | `manifests/00-namespace.yaml` | Namespace with RHOAI NIM annotation |
-| `manifests/01-ngc-secrets.yaml` | Secret templates (fill in NGC API key before applying) |
-| `manifests/02-pvc.yaml` | 30 Gi PVC for model cache |
-| `manifests/03-servingruntime.yaml` | NIM ServingRuntime |
-| `manifests/04-inferenceservice.yaml` | InferenceService with T4 fixes + Playground labels + served model name |
-| `manifests/05-llamastack-config-patch.yaml` | Documents Llama Stack ConfigMap changes required for Playground |
+| `manifests/01-pvc.yaml` | 30 Gi PVC for model cache |
+| `manifests/02-servingruntime.yaml` | NIM ServingRuntime |
+| `manifests/03-inferenceservice.yaml` | InferenceService with T4 fixes + Playground labels + served model name |
+| `manifests/04-llamastack-config-patch.yaml` | Documents Llama Stack ConfigMap changes required for Playground |
 | `manifests/fix-t4-patch.yaml` | Patch-only: T4 vLLM profile + context cap + served model name |
 | `manifests/fix-playground.yaml` | Patch-only: adds Playground visibility to any InferenceService |
 | `manifests/fix-cpu-request.yaml` | Patch-only: lowers kserve-container CPU request to 200m (limit stays 1); needed when GPU nodes have limited CPU headroom |

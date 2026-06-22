@@ -27,6 +27,10 @@ metadata:
     serving.kserve.io/deploymentMode: Standard
     # Required for RHOAI Playground (GenAI Studio) visibility.
     opendatahub.io/model-type: generative
+    # NIM exposes Prometheus metrics at /v1/metrics, not the default /metrics.
+    # This annotation is read by the RHOAI KServe controller when creating the
+    # auto-managed ServiceMonitor for openshift-user-workload-monitoring.
+    prometheus.io/path: /v1/metrics
   labels:
     networking.kserve.io/visibility: exposed
     opendatahub.io/dashboard: "true"

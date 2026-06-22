@@ -14,4 +14,3 @@ spec:
   resources:
     requests:
       storage: 30Gi
-  storageClassName: gp3-csi

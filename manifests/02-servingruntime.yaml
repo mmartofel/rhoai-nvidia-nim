@@ -21,7 +21,7 @@ metadata:
     opendatahub.io/dashboard: "true"
 spec:
   annotations:
-    prometheus.io/path: /metrics
+    prometheus.io/path: /v1/metrics
     prometheus.io/port: "8000"
   multiModel: false
   protocolVersions:

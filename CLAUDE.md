@@ -16,10 +16,10 @@ Manifests and patches for deploying a NVIDIA NIM inference service (`llama-3.1-n
 
 ```bash
 oc apply -f manifests/00-namespace.yaml
-# create secrets (see README Step 2 — do not apply 01-ngc-secrets.yaml with real keys)
-oc apply -f manifests/02-pvc.yaml
-oc apply -f manifests/03-servingruntime.yaml
-oc apply -f manifests/04-inferenceservice.yaml
+# create secrets imperatively — see README Step 2
+oc apply -f manifests/01-pvc.yaml
+oc apply -f manifests/02-servingruntime.yaml
+oc apply -f manifests/03-inferenceservice.yaml
 ```
 
 ## Patch files (for existing UI-created InferenceServices)
